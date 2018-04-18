@@ -1,0 +1,150 @@
+오늘은 네비게이션 바를 만들어보도록 할 것
+네비게이션 바는 일종의 리스트
+그 리스트에 링크를 걸어주면 네비게이션 바
+링크의 리스트
+ul은 untitled 리스트
+ol는 titled 리스트
+li는 리스트 목록
+
+<html>
+<head>
+<title>DIV tag</title>
+<style>
+</style>
+</head>
+<body>
+<p>Example of unordered lists:</p>
+<ul>
+<li>Coffee</li>
+<li>Tea</li>
+<li>Coca Cola</li>
+</ul>
+<p>Example of ordered lists:</p>
+<ol>
+<li>Coffee</li>
+<li>Tea</li>
+<li>Coca Cola</li>
+
+<ul>
+<li><a href="./index.html">Home</a></li>
+<li><a href="./news.html">NEWS</li>
+<li><a href="./contact.html">Contact</li>
+<li><a href="./about.html">About</li>
+</ul>
+</ol>
+Home Page
+</body>
+</html>
+
+잠시 쉬었다가 페이지 분할
+
+&는 html 인코딩
+
+소스파일 구성 index.php가 기본 페이지
+header.php와 footer.php는 다른 페이지에서도 쓸 수 있게 따로 빼놓은 것
+css 디렉토리는 css 정의가 들어가 있음
+
+index.php
+웹 서비스는 4계층 프로토콜로 tcp
+웹 서비스는 계속 접속해있어도 접속이 유지가 되지 않고 끊김
+그래서 사용자의 현재 세션 상태를 추적하기 위한 추가 정보가 필요
+그것을 세션 토큰 or 쿠키라고 한다.
+그것을 시작해주는 것이 session start
+세션에 대해서는 나중에 다시 자세히 설명, 그것과 관련해서 세션 하이재킹이라는 공격도 가능
+<? session_start();?>
+<html>
+	<head>							-> 헤더 부분에 css 링크가 걸려있음
+	<link href="/basic/css/main.css" rel="stylesheet" type="text/css">	-> 그냥 / 는 웹서비스가 사용하는 최상위 디렉토리 /var/www/html
+	</head>
+	<body>							-> 바디 시작
+	
+	<div id="wrap">						-> 바디 전체를 묶는 div
+		<header>						-> login, join, care lab 로고 등
+		<?php 
+			if(! $_SESSION['userid'])	-> userid가 없으면
+			{
+				?>
+				<div id="login"><a href="./login/login_form.php">Login</a>	-> login 표시
+				| <a href="./member/join.php">Join</a>
+				</div>
+		<?php 
+			} else {			-> userid가 있으면
+		?>
+			<div id="login"><a href="./login/logout.php">Logout</a>		-> logout 표시
+				| <a href="./member/member_modify.php">Modify</a>
+				</div>
+		<?php } ?>
+		
+			<div id="logo">
+			<h1>	<a href="/basic/index.php">CARE LAB</a> </h1>
+			</div>
+		
+			<nav><ul>				-> nav 바
+				<li><a href="/basic/index.php">HOME</a></li>
+				<li><a href="/basic/company/welcome.php">COMPANY</a></li>
+				<li><a href="#">SOLUTIONS</a></li>			-> 아무 것도 안 걸려 있음
+				<li><a href="/basic/greet/list.php">CUSTOMER CENTER</a></li> -> 현재 구현은 안되어 있음
+			</ul></nav>
+		</header>
+		<div class="clear"></div>	-> float 속성을 초기화 시키는 설정
+		<div id="main_img">
+			<img src="images/main_img.jpg" width="971" height="282">
+		</div>
+		<article id="front">
+		<div id="solution">
+			<div id="hosting">
+				<h3>Web Hosting Solution</h3>
+					<p>A web hosting service is a type of Internet hosting service that allows individuals and organizations to make their website accessible via the World Wide Web.</p>
+			</div>
+			<div id="security">
+				<h3>Web Security Solution</h3>
+				<p>Web application security is a branch of Information Security that deals specifically with security of websites, web applications and web services.</p>
+			</div>
+			<div id="payment">
+				<h3>Web Payment Solution</h3>
+				<p>The consumer uses web pages displayed or additional applications downloaded and installed on the mobile phone to make a payment.</p>
+			</div>
+		</div>
+		 <div class="clear"></div>
+		 	<div id="sec_news">
+		 		<h3><span class="orange">Security </span> News</h3>
+					<dl>
+		 				<dt>Middle Title1</dt>
+		 					<dd>content1</dd>
+		 				<dt>Middle Title2</dt>
+		 					<dd>content2</dd>
+		 			</dl>
+		 	</div>
+		 	<div id="news_notice">
+		 		<h3 class="brown">News &amp; Notice</h3>
+		 		<table>
+		 			<tr>
+		 				<td class="contxt"><a href="#">Notice Tilte1</a></td>
+		 				<td><a href="#">2016.10.11</a></td>
+		 			</tr>
+		 			<tr>
+		 				<td class="contxt"><a href="#">Notice Tilte2</a></td>
+		 				<td><a href="#">2016.10.12</a></td>
+		 			</tr>
+		 		</table>
+		 	</div>
+		</article>
+		<footer>
+			<hr>
+			
+			<div id="copy">
+			Copyright 2016 kyes Inc. all rights reserved 
+			contact mail : wingofbluesky@kgitbank.co.kr Tel: +82 010-1234-1234
+			</div>
+			<div id="social">
+				<img src="images/facebook.gif" width="33" height="33" alt="Facebook">
+				<img src="images/twitter.gif" width="33" height="33" alt="twitter">
+				
+			</div>
+			
+		</footer>
+	</div><!-- wrap -->
+	</body>
+</html>
+
+내일부터 회원가입 로그오프 등 DB 연동 세팅 할 것
