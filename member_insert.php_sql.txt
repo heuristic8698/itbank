@@ -1,0 +1,2 @@
+$sql = "insert into member (id,pass,name,nick,mphone,email,regist_day) ";
+$sql .= "values ('".$_GET['id']."','".$_GET['passwd']."','".$_GET['name']."','".$_GET['nick']."','".$_GET['hp']."','".$_GET['e-mail']."','$regist_day')";

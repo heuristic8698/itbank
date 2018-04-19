@@ -1,0 +1,438 @@
+[root@localhost ~]# service mysqld start
+mysqld (을)를 시작 중:                                     [  OK  ]
+[root@localhost ~]# mysql -u root -phackers
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.1.73 Source distribution
+
+Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+루트 계정으로 들어간 상태에서 우선 데이터베이스 계정을 만들어야함
+계정을 어떻게 사용하냐하면 basic 밑에 login 디렉토리에 들어가보면 dbconn.php 파일이 있음
+dbconn.php 파일을 문서 편집기로 열어서 확인해보면 
+
+<?php 
+	$connect = mysql_connect("localhost", "careadmin", "hackers") or die("SQL Server 연결 실패!"); -> $connect는 연결 정보를 가지고 있는 변수
+	-> localhost에 있는 데이터베이스, 계정명은 careadmin, 비밀번호는 hackers
+	-> 데이터베이스에 접근할 때 마다 이 파일을 include 해서 사용해야함
+	mysql_select_db("care_db", $connect);
+?>
+
+계정을 생성하려면 mysql 데이터베이스를 편집해야함
+mysql> use mysql;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+
+mysql> select host, user, password from user;
++-----------------------+------+-------------------------------------------+
+| host                  | user | password                                  |
++-----------------------+------+-------------------------------------------+
+| localhost             | root | *07280A286D502F30509936FA6C65E32C275DE05D |
+| localhost.localdomain | root | *07280A286D502F30509936FA6C65E32C275DE05D |
+| 127.0.0.1             | root | *07280A286D502F30509936FA6C65E32C275DE05D |
+| localhost             |      |                                           |
+| localhost.localdomain |      |                                           |
++-----------------------+------+-------------------------------------------+
+5 rows in set (0.00 sec)
+
+테이블에 새로운 데이터를 입력할 때는 insert into 명령어 사용
+
+mysql> insert into user (host,user,password) values('localhost','careadmin',password('hackers'));
+Query OK, 1 row affected, 3 warnings (0.01 sec)
+
+mysql> select host, user, password from user;+-----------------------+-----------+-------------------------------------------+
+| host                  | user      | password                                  |
++-----------------------+-----------+-------------------------------------------+
+| localhost             | root      | *07280A286D502F30509936FA6C65E32C275DE05D |
+| localhost.localdomain | root      | *07280A286D502F30509936FA6C65E32C275DE05D |
+| 127.0.0.1             | root      | *07280A286D502F30509936FA6C65E32C275DE05D |
+| localhost             |           |                                           |
+| localhost.localdomain |           |                                           |
+| localhost             | careadmin | *07280A286D502F30509936FA6C65E32C275DE05D |
++-----------------------+-----------+-------------------------------------------+
+6 rows in set (0.00 sec)
+
+care_db 생성
+mysql> create database care_db;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| care_db            |
+| mysql              |
+| test               |
++--------------------+
+4 rows in set (0.00 sec)
+
+mysql 데이터 베이스에 db라고 하는 테이블을 보면 어떤 계정이 어떤 데이터 베이스를 대상으로
+어떤 권한을 가지고 있는지에 대한 정보가 저장되어 있음
+mysql> show tables ;
++---------------------------+
+| Tables_in_mysql           |
++---------------------------+
+| columns_priv              |
+| db                        |
+| event                     |
+| func                      |
+| general_log               |
+| help_category             |
+| help_keyword              |
+| help_relation             |
+| help_topic                |
+| host                      |
+| ndb_binlog_index          |
+| plugin                    |
+| proc                      |
+| procs_priv                |
+| servers                   |
+| slow_log                  |
+| tables_priv               |
+| time_zone                 |
+| time_zone_leap_second     |
+| time_zone_name            |
+| time_zone_transition      |
+| time_zone_transition_type |
+| user                      |
++---------------------------+
+23 rows in set (0.00 sec)
+
+방금 생성한 careadmin 계정을 care_db에 대한 권한을 갖도록 설정해줘야함
+
+mysql> desc db;
++-----------------------+---------------+------+-----+---------+-------+
+| Field                 | Type          | Null | Key | Default | Extra |
++-----------------------+---------------+------+-----+---------+-------+
+| Host                  | char(60)      | NO   | PRI |         |       |	--> db가 어디에 위치해 있는지
+| Db                    | char(64)      | NO   | PRI |         |       |	--> 어떤 db
+| User                  | char(16)      | NO   | PRI |         |       |	--> 어떤 계정을 대상으로 하는지
+| Select_priv           | enum('N','Y') | NO   |     | N       |       |
+| Insert_priv           | enum('N','Y') | NO   |     | N       |       |
+| Update_priv           | enum('N','Y') | NO   |     | N       |       |
+| Delete_priv           | enum('N','Y') | NO   |     | N       |       |
+| Create_priv           | enum('N','Y') | NO   |     | N       |       |
+| Drop_priv             | enum('N','Y') | NO   |     | N       |       |
+| Grant_priv            | enum('N','Y') | NO   |     | N       |       |
+| References_priv       | enum('N','Y') | NO   |     | N       |       |
+| Index_priv            | enum('N','Y') | NO   |     | N       |       |
+| Alter_priv            | enum('N','Y') | NO   |     | N       |       |
+| Create_tmp_table_priv | enum('N','Y') | NO   |     | N       |       |
+| Lock_tables_priv      | enum('N','Y') | NO   |     | N       |       |
+| Create_view_priv      | enum('N','Y') | NO   |     | N       |       |
+| Show_view_priv        | enum('N','Y') | NO   |     | N       |       |
+| Create_routine_priv   | enum('N','Y') | NO   |     | N       |       |
+| Alter_routine_priv    | enum('N','Y') | NO   |     | N       |       |
+| Execute_priv          | enum('N','Y') | NO   |     | N       |       |
+| Event_priv            | enum('N','Y') | NO   |     | N       |       |
+| Trigger_priv          | enum('N','Y') | NO   |     | N       |       |
++-----------------------+---------------+------+-----+---------+-------+
+22 rows in set (0.00 sec)
+
+아까는 필드를 지정해서 레코드를 추가했지만 모든 필드에 값을 추가해줄 때는 필드를 지정하지 않아도 됨
+mysql> insert into db values ('localhost', 'care_db', 'careadmin', 'y','y','y','y','y','y','y','y','y','y','y','y','y','y','y','y','y','y','y');
+Query OK, 1 row affected (0.00 sec)
+
+레코드 추가 확인
+mysql> select * from db where user='careadmin';
++-----------+---------+-----------+-------------+-------------+-------------+-------------+-------------+-----------+------------+-----------------+------------+------------+-----------------------+------------------+------------------+----------------+---------------------+--------------------+--------------+------------+--------------+
+| Host      | Db      | User      | Select_priv | Insert_priv | Update_priv | Delete_priv | Create_priv | Drop_priv | Grant_priv | References_priv | Index_priv | Alter_priv | Create_tmp_table_priv | Lock_tables_priv | Create_view_priv | Show_view_priv | Create_routine_priv | Alter_routine_priv | Execute_priv | Event_priv | Trigger_priv |
++-----------+---------+-----------+-------------+-------------+-------------+-------------+-------------+-----------+------------+-----------------+------------+------------+-----------------------+------------------+------------------+----------------+---------------------+--------------------+--------------+------------+--------------+
+| localhost | care_db | careadmin | Y           | Y           | Y           | Y           | Y           | Y         | Y          | Y               | Y          | Y          | Y                     | Y                | Y                | Y              | Y                   | Y                  | Y            | Y          | Y            |
++-----------+---------+-----------+-------------+-------------+-------------+-------------+-------------+-----------+------------+-----------------+------------+------------+-----------------------+------------------+------------------+----------------+---------------------+--------------------+--------------+------------+--------------+
+1 row in set (0.00 sec)
+
+권한 설정이 잘 되었는지 확인
+권한 초기화?, 적용? 하고 나감
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+mysql> exit
+Bye
+
+아까 생성한 careadmin 계정을 접속 후 db 테이블들이 보이는 지 확인
+
+[root@localhost ~]# mysql -u careadmin -phackers
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 6
+Server version: 5.1.73 Source distribution
+
+Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| care_db            |
+| test               |
++--------------------+
+3 rows in set (0.00 sec)
+
+테이블은 회원정보, 게시판 정보가 들어갈 테이블이 필요
+알드라이브에서 greet.sql, member.sql 파일을 받아서 리눅스 루트계정 디렉토리(~)에 저장
+이 파일을 이용해서 테이블을 생성해볼 것
+
+[root@localhost ~]# mysql -u careadmin -phackers care_db
+이렇게 하면  mysql -u careadmin -phackers 입력해서 로그인 후 use care_db 하는 것과 동일
+
+[root@localhost ~]# mysql -u careadmin -phackers care_db < member.sql
+[root@localhost ~]# mysql -u careadmin -phackers care_db < greet.sql
+이렇게하면 리디렉션, care_db로 접속 후 파일의 내용을 실행하는 것
+
+생성된 테이블 확인
+[root@localhost ~]# mysql -u careadmin -phackers care_db
+mysql> show tables;
++-------------------+
+| Tables_in_care_db |
++-------------------+
+| greet             |
+| member            |
++-------------------+
+2 rows in set (0.00 sec)
+
+멤버 테이블의 스키마를 확인
+mysql> desc member;
++------------+------------------+------+-----+---------+----------------+
+| Field      | Type             | Null | Key | Default | Extra          |
++------------+------------------+------+-----+---------+----------------+
+| num        | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| id         | varchar(50)      | NO   | PRI | NULL    |                |
+| pass       | varchar(50)      | NO   |     | NULL    |                |
+| name       | varchar(50)      | YES  |     | NULL    |                |
+| nick       | varchar(50)      | YES  |     | NULL    |                |
+| mphone     | varchar(20)      | YES  |     | NULL    |                |
+| email      | varchar(50)      | YES  |     | NULL    |                |
+| regist_day | varchar(30)      | YES  |     | NULL    |                |
++------------+------------------+------+-----+---------+----------------+
+8 rows in set (0.00 sec)
+
+-> Null 이 no면 값이 반드시 잇어야 한다는 것, Key에서 PRI는 기본키로 사용할 수 있는 고유 식별값
+Extra의 auto_increment는 자동으로 증가하는 값, num을 제외한 나머지는 모두 다 문자열
+
+mysql> desc greet;
++------------+------------------+------+-----+---------+----------------+
+| Field      | Type             | Null | Key | Default | Extra          |
++------------+------------------+------+-----+---------+----------------+
+| num        | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| id         | varchar(15)      | YES  |     | NULL    |                |
+| nick       | varchar(10)      | YES  |     | NULL    |                |
+| subject    | varchar(255)     | NO   |     | NULL    |                |
+| content    | text             | YES  |     | NULL    |                |
+| regist_day | varchar(20)      | YES  |     | NULL    |                |
+| hit        | int(10) unsigned | YES  |     | NULL    |                |
+| file_name  | varchar(255)     | YES  |     | NULL    |                |
++------------+------------------+------+-----+---------+----------------+
+8 rows in set (0.00 sec)
+
+-> regist_day는 게시 날짜, hit은 조회수, file_name은 첨부파일
+
+여기까지 데이터베이스 세팅이 끝남
+이제 회원가입 기능을 만들어 볼 것
+
+회원가입은 메인 페이지에서 join을 눌렀을 때 실행되는 것
+문서를 확인해 보면 join을 눌렀을 때 basic/member/join.php로 이동하는 것을 확인할 수 있음
+join에 회원가입 폼을 입력함 그리고 확인을 누르면
+member_insert.php 를 통해서 데이터베이스에 접근해서 레코드 생성을 시도함
+
+
+<? include "../header.php";?>
+<? include "sub_img.php";?>
+<? include "sub_menu.php";?>
+
+<article>
+<h1>Join Us</h1> 우선 join us라는 문구를 삽입
+<form id="join" method="get" action="./member_insert.php">  -> http는 데이터를 보낼 때 어떤 방식으로 보낼지 설정, 대표적인 것이 get, post, 데이터를 전달해야 하거나 url창을 이용해서 데이터를 전달할 때 get방식을 사용, post 방식은 웹서버에 데이터를 전달할 때 url 주소가 아닌 body 창에 넣어서 보내주는지에 대한 차이
+action은 제출을 할 때 입력한 데이터들을 parameter에 담아서 어디에 줄 것인지를 명시
+	<fieldset> -> form 태그는 input 태그를 통해서 데이터를 받는데 fieldset 태그를 사용하면 input 태그를 묶어서 테두리를 만들어줌, 보기 더 좋게 정리
+		<legend>Basic Info</legend> -> 요소들에 대한 설명을 입력할 때 사용
+		<label>User Id</lable>	-> 그대로 화면에 보여지는 부분
+		<input name="id" type="text" class="id"> -> name은 parameter 이름, text는 그냥 텍스트, class는 스타일 적용을 위함
+		<div class="clear"></div>  -> float 정리용 코드 
+		<label>Password</lable>	-> Password라는 설명
+		<input name="passwd" type="password" class="pass"> -> parameter 이름은 passwd, password 타입은 입력한 내용이 화면에 보이지 않음
+		<div class="clear"></div>
+		<label>Confirm Password</lable> -> 비밀번호 확인용
+		<input name="pass_confirm" type="password" class="pass">
+		<div class="clear"></div>
+		<label>Name</lable>	-> 기타 정보 입력
+		<input name="name" type="text" class="nick">
+		<div class="clear"></div>
+		<label>Nickname</lable>
+		<input name="nick" type="text" class="nick">
+		<div class="clear"></div>
+		<label>Mobile Phone Number</lable>
+		<input name="hp" type="tel" class="mobile">
+		<div class="clear"></div>
+		<label>E-Mail</lable>
+		<input name="e-mail" type="text" class="email">
+		<div class="clear"></div>
+	</fieldset>
+	<div id="buttons">	--> buttons css 적용
+		<input type="submit" value="Submit" class="submit">  -> 타입은 submit, 표시되는 내용 Submit, css submit 적용
+		<input type="button" value="Cancel" class="cancel" onClick="javascript:location.href='../index.php';">		-> 타입은 button, 표시되는 내용은 Cancel, css cancel 적용, onClick은 버튼 클릭시 실행할 동작, javascript는 웹 브라우저에서 작동하는 코드, php는 서버에서 작동하는 코드, 클릭시 ../index.php페이지로 이동
+	</div>
+</form>
+</article>
+
+<? include "../footer.php";?>
+
+http://192.168.52.136/basic/member/member_insert.php?id=user1&passwd=asdf&pass_confirm=asdf&name=asdf&nick=assadf&hp=sadf&e-mail=asdfasdf
+?는 url 주소와 parameter를 구분하는 기호
+그다음부터 입력한 parameter 값이 보임, 이렇게 사용하는 것이 get 방식
+
+잠시 쉬었다가 member_insert.php 파일을 작성해볼것 
+
+member_insert.php 를 실행
+
+<?php
+$regist_day = date("Y-m-d (H:i)");	-> 
+echo "id: ".$_GET['id']."<br>";	-> echo는 출력 함수, ""는 문자열을 표시하기 위함, .은 문자열을 연결하는 연산자, $_GET['parameter이름'] 이렇게 하면 get 방식으로 넘어온 parameter 값을 받음."<br>"은 태그가 그대로 실행됨 
+다른 데이터들도 확인
+echo "passwd: ".$_GET['passwd']."<br>";
+echo "pass_confirm: ".$_GET['pass_confirm']."<br>";
+echo "name: ".$_GET['name']."<br>";
+echo "hp: ".$_GET['hp']."<br>";
+echo "e-mail: ".$_GET['e-mail']."<br>";
+echo "regist_day: ".$regist_day."<br>";
+?>
+
+db에 데이터를 저장하기 위해서는 db에 접근해야 함
+<?php
+include "../login/dbconn.php";		-> 우선 login.dbconn.php를 include해서 db에 접근
+
+if(!$_GET['id']||!$_GET['passwd']){		-> id나 passwd 입력 값이 없으면
+	echo("<script> window.alert('아이디와 패스워드 모두 입력해야 합니다.');history.go(-1);</script>"); exit;   -> <script>는 자바 스크립드 명령어 실행, window.alert은 경고창 띄움, history.go는 뒤로가기 이동 exit는 종료
+}
+
+우선 sql 쿼리문을 만듬
+$sql = "insert into member (id,pass,name,nick,mpone,email.regist_day) "; -> member 테이블에 데이터를 넣을 필드값을 넣은 sql문 생성
+$sql .= "values ('".$_GET['id']."','".$_GET
+['passwd']."','".$_GET['name']."','".$_GET['nick']."','".
+$_GET['hp']."','".$_GET['e-mail']."','$regist_day')";
+echo $sql."<br>";
+mysql_query($sql, $connect);
+mysql_close();
+echo "<script>window.alert('가입 완료');
+		location.href='../index.php';</script>";
+?>
+
+<----
+echo $sql."<br>";
+echo "id: ".$_GET['id']."<br>";
+echo "passwd: ".$_GET['passwd']."<br>";
+echo "pass_confirm: ".$_GET['pass_confirm']."<br>";
+echo "name: ".$_GET['name']."<br>";
+echo "hp: ".$_GET['hp']."<br>";
+echo "e-mail: ".$_GET['e-mail']."<br>";
+echo "regist_day: ".$regist_day."<br>";
+---->
+지우고 싶을 때는 delete from member where id='아이디';
+
+회원가입 정보 저장 확인
+mysql> select * from member;
++-----+-------+--------+------+------+---------------+------------------+--------------------+
+| num | id    | pass   | name | nick | mphone        | email            | regist_day         |
++-----+-------+--------+------+------+---------------+------------------+--------------------+
+|   6 | user1 | user@1 | nada | naya | 010-1234-5678 | nada@carelab.com | 2018-04-19 (12:05) |
++-----+-------+--------+------+------+---------------+------------------+--------------------+
+1 row in set (0.00 sec)
+
+회원정보가 저장이 되었으니 이제 로그인을 확인해볼 것
+
+basic/login/login_form.php 실행
+
+<?php include "../header.php";?>
+<div id="sub_img_login"></div>
+<article id="login_art">
+	<h1>Login</h1>
+	<div class="login_box">
+		<form name="login_form" method="get" action="./login.php">
+			<label>아이디</label>
+			<input type="text" name="userid">
+			<div class="clear"></div>
+			<label>패스워드</label>
+			<input type="password" name="passwd">
+			<div class="clear"></div>
+			<span class="btn">		--> 공간을 분할하는 것은 div 와 비슷하지만 자동 줄바꿈이 안됨, margin 설정의 차이가 있음
+				<input type="submit" value="로그인하기">
+			</span>		
+		</form>
+	</div> 
+</article>
+<?php include "../footer.php";?>
+
+여기까지 하고 로그인 정보가 parameter로 잘 전달되는지 확인
+이제 login.php에서 로그인 정보를 DB 정보와 비교하여 로그인 처리를 하도록 할 것
+로그인 처리를 하려고 하면 로그인이 되었을 때 세션 정보를 수정해야 하기 때문에 세션 정보도 접근할 것이고 DB에 정보와 비교해야하기 때문에 DB에도 접근해야 함
+
+<?php 
+session_start();
+if(!$_GET['userid']){
+	echo("<script>window.alert('아이디를 입력하세요.');history.go(-1);</script>");exit;}
+include "./dbconn.php";
+$sql = "select * from member where id='".$_GET['userid']."'";
+$result = mysql_query($sql, $connect);		-> result에는 쿼리로 얻어온 테이블이 저장
+$num_match = mysql_num_rows($result);	-> id가 있으면 1, 없으면 0이 저장될 것
+if(!$num_match){
+	echo("<script>window.alert('입력 정보가 틀렸습니다.');history.go(-1);</script>");
+}
+else{
+	$row = mysql_fetch_array($result);	-> $result는 2차원 배열의 주소라고 생각하면되고 mysql_fetch_array는 첫 번째 레코드를 가지고 오는 것
+	mysql_close();			-> db 사용 종료
+	$db_pass = $row[pass];		-> $row 레코드의 pass 필드에 있는 값을 $db_pass에 저장
+	if($_GET['passwd']!=$db_pass){	-> 패스워드 비교
+		echo("<script>window.alert('입력 정보가 틀렸습니다.');history.go(-1);</script>");exit;
+	}
+	$_SESSION['userid'] = $row[id];
+	$_SESSION['username'] = $row[name];
+	$_SESSION['usernick'] = $row[nick];
+	$_SESSION['hp'] = $row[mphone];
+	$_SESSION['e-mail'] = $row[email];
+	$_SESSION['regist_day'] = $row[regist_day];
+
+		echo("<script>window.alert('로그인 성공');location.href='../index.php';</script>");
+}
+?>
+
+
+logout을 만들어 볼것
+basic/login/logout.php 파일 실행
+로그아웃은 간단함
+
+<?
+session_start();
+unset($_SESSION['userid']);		-> 할당했던 세션들을 제거
+unset($_SESSION['username']);
+unset($_SESSION['usernick']);
+unset($_SESSION['hp']);
+unset($_SESSION['e-mail']);
+unset($_SESSION['regist_day']);
+
+echo("<script>window.alert('잘가요~');
+	location.href='../index.php';</script>");
+?>
+
+id와 패스워드 모두 입력하게 만들기
+<?php 
+session_start();
+if(!$_GET['userid']){
+	echo("<script>window.alert('아이디를 입력하세요.');history.go(-1);</script>");exit;}
+if(!$_GET['passwd']){
+	echo("<script>window.alert('아이디와 패스워드를 모두 입력해야 합니다');history.go(-1);</script>");exit;}
+include "./dbconn.php";
+
