@@ -8,25 +8,25 @@
 <form id="join" method="get" action="./member_insert.php">
 	<fieldset>
 		<legend>Basic Info</legend>
-		<label>User Id</lable>
+		<label>User Id</label>
 		<input name="id" type="text" class="id">
 		<div class="clear"></div>
-		<label>Password</lable>
+		<label>Password</label>
 		<input name="passwd" type="password" class="pass">
 		<div class="clear"></div>
-		<label>Confirm Password</lable>
+		<label>Confirm Password</label>
 		<input name="pass_confirm" type="password" class="pass">
 		<div class="clear"></div>
-		<label>Name</lable>
+		<label>Name</label>
 		<input name="name" type="text" class="nick">
 		<div class="clear"></div>
-		<label>Nickname</lable>
+		<label>Nickname</label>
 		<input name="nick" type="text" class="nick">
 		<div class="clear"></div>
-		<label>Mobile Phone Number</lable>
+		<label>Mobile Phone Number</label>
 		<input name="hp" type="tel" class="mobile">
 		<div class="clear"></div>
-		<label>E-Mail</lable>
+		<label>E-Mail</label>
 		<input name="e-mail" type="text" class="email">
 		<div class="clear"></div>
 	</fieldset>

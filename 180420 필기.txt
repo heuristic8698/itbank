@@ -1,0 +1,290 @@
+기능 구현 실습
+1. 회원 가입 시 Password와 Confirm Password 동일 여부 확인 후 다른 경우 에러 처리
+2. ID 중복 체크
+
+
+member_insert.php 파일
+<?php
+
+include "../login/dbconn.php";
+
+if(!$_GET['id']||!$_GET['passwd']){
+	echo("<script> window.alert('아이디와 패스워드 모두 입력해야 합니다.');history.go(-1);</script>");exit;}
+이하
+1번 
+if($_GET['passwd']!=$_GET['pass_confirm']){
+	echo("<script> window.alert('Password와 Confirm Password가 일치하지 않습니다.');history.go(-1);</script>");exit;}
+
+2번
+$sql_idcheck = "select * from member where id='".$_GET['id']."'";
+$result = mysql_query($sql_idcheck, $connect);
+$num_match = mysql_num_rows($result);
+if($num_match){
+	echo("<script>window.alert('이미 존재하는 ID입니다.');history.go(-1);</script>");
+	mysql_close();exit;
+}
+
+이번에는 회원정보 수정
+회원 정보 폼은 member/member_modify.php 파일 실행
+update 구문이 실행될 것
+join.php 파일의 내용을 member_modify.php 로 복사
+
+join은 회원 정보가 빈칸 이었지만 modify는 기존 정보를 표시해주어야 할 것
+id는 변경이 되면 안됨, id 변경이 가능해지면 다른 회원의 정보에 접근할 수 있음
+
+
+<? include "../header.php";?>
+<? include "sub_img.php";?>
+<? include "sub_menu.php";?>
+
+<article>
+<h1>Change Your Information</h1>
+<form id="join" method="get" action="./modify.php">
+	<fieldset>
+		<legend>Basic Info</legend>
+		<label>User Id</lable>
+		<font size="2" face="verdana" style="line-height:28px;">&nbsp;<?=$_SESSION['userid']?></font>  --> &nbsp는 html 인코딩, 한칸 띄우기
+		<div class="clear"></div>
+		<label>Password</lable>
+		<input name="passwd" type="password" class="pass">
+		<div class="clear"></div>
+		<label>Confirm Password</lable>
+		<input name="pass_confirm" type="password" class="pass">
+		<div class="clear"></div>				--> 패스워드는 그대로
+		<label>Name</lable>
+		<input name="name" type="text" class="nick">
+		<div class="clear"></div>
+		<label>Nickname</lable>
+		<input name="nick" type="text" class="nick">
+		<div class="clear"></div>
+		<label>Mobile Phone Number</lable>
+		<input name="hp" type="tel" class="mobile">
+		<div class="clear"></div>
+		<label>E-Mail</lable>
+		<input name="e-mail" type="text" class="email">
+		<div class="clear"></div>
+	</fieldset>
+	<div id="buttons">
+		<input type="submit" value="Submit" class="submit">
+		<input type="button" value="Cancel" class="cancel" onClick="javascript:location.href='../index.php';">
+	</div>
+</form>
+</article>
+
+<? include "../footer.php";?>
+
+modify.php 실행
+<?php
+session_start();
+include "../login/dbconn.php";
+
+$sql = "update member set pass='".$_GET['passwd']."',name='".$_GET['name']."',";
+$sql .="nick='".$_GET['nick']."', mphone='".$_GET['hp']."', email='".$_GET['e-mail']."' where id='".$_SESSION['userid']."'";
+
+mysql_query($sql, $connect);
+mysql_close();
+echo "<script>alert('수정 완료'); window.alert('다시 로그온하세요.');location.href='../login/logout.php';</script>";
+?>
+
+여기까지는 문제점이 있음
+공격자가 내 계정의 비밀번호를 마음대로 바꿀 수 있음
+기능상의 문제는 비밀번호 없이도 제출이 가능해서 비밀번호가 없는 것으로 저장됨 
+
+기능 구현 실습
+1. Old Password와 기존 비밀번호가 같은지 확인
+2. New Password 입력 확인
+3. New Password와 Confirm Password 동일 여부 확인
+
+modify.php 파일 수정
+
+
+<?php
+session_start();
+include "../login/dbconn.php";
+1번
+$sql = "select * from member where id='".$_SESSION['userid']."'";
+$result = mysql_query($sql, $connect);
+$row = mysql_fetch_array($result);
+$pass = $row[pass];
+if($_GET['pass_old']!=$pass){
+	echo("<script> window.alert('기존 비밀번호가 일치하지 않습니다.');history.go(-1);</script>");exit;}
+2번, 3번
+
+if($_GET['pass_new']){
+	if($_GET['pass_new']!=$_GET['pass_confirm']){
+	echo("<script> window.alert('New Password와 Confirm Password가 일치하지 않습니다.');history.go(-1);</script>");exit;}
+	$sql = "update member set pass='".$_GET['pass_new']."',name='".$_GET['name']."',";
+}
+else{
+	$sql = "update member set name='".$_GET['name']."',";
+}
+
+나머지
+
+$sql .="nick='".$_GET['nick']."', mphone='".$_GET['hp']."', email='".$_GET['e-mail']."' where id='".$_SESSION['userid']."'";
+
+mysql_query($sql, $connect);
+mysql_close();
+echo "<script>alert('수정 완료'); window.alert('다시 로그온하세요.');location.href='../login/logout.php';</script>";
+
+여기까지 회원 관련 설정
+이제는 게시판 만들어 볼 것
+
+게시판은 main 페이지에서 customer center 클릭하면 들어가지는 부분
+basic/greet
+sub_img.php, sub_menu.php 는 css 파일로 수정할 필요는 없고 나머지 6개 파일은 ftp 서버에 올라와 있으니 복사할 것
+delete, download, insert, list, view, write_form
+
+
+설명을 잘 들어둘 것
+
+list.php
+
+<?php	
+	include "../header.php";		
+	include "../login/dbconn.php";
+	
+	$scale = 5;			--> 페이지 하나에 몇 개의 게시글을 보여줄 것인지
+	--> list.php는 검색 페이지와도 관련이 있음, 메인 페이지에서 들어가면 게시판에 들어가지는데
+	--> list.php는 parameter를 받아서 사용되기도 함, 기본적으로 페이지는 1페이지
+	--> 각각의 parameter가 있을 때 그것을 처리
+	$search = $_POST['search'];		--> 검색할 문자열
+	$find = $_POST['find'];		--> 검색할 기준
+	$mode = $_GET[mode];		--> mode가 search 모드면 검색, 나중에 설명
+	$page = $_GET[page];
+	
+	if($mode == "search")		--> mode가 search면 
+	{
+		if(!$search)		--> 검색 문자열이 없으면
+		{
+			echo("
+						<script>
+						window.alert('검색 단어를 입력하세요!');
+						history.go(-1);
+					</script>
+					");
+			exit;
+		}
+		$sql = "select * from greet where $find like '%$search%' order by num desc";	--> 검색 문자열이 있으면 $find가 검색 기준,필드명과 동일, like는 특정 문자열과 똑같은 것이 아니라 그 문자열이 들어가 있는 것을 찾을 때, %는 *와 비슷, 그리고 역정렬  
+	}
+	else {
+		$sql = "select * from greet order by num desc";	--> 조건이 없으니 게시글을 다 가져오라는 의미, order by 는 정렬, num을 기준으로 desc는 역정렬, 최근에 작성된 게시글을 먼저 노출시키겠다는 것
+	}
+	
+	$result = mysql_query($sql, $connect);		--> result에 sql 결과 저장, 전체 게시글 테이블
+	$total_record = mysql_num_rows($result);	--> 전체 게시글 수 확인, search인 경우 개수가 달라짐
+	mysql_close();
+	
+	if($total_record % $scale == 0)		--> 전체 게시글 수가 한 페이지에 보여줄 크기로 나누어 떨어지는지 확인
+	{
+		$total_page = floor($total_record / $scale);  --> 떨어지면 그냥 나눈 몫, floor는 소수점 버림 함수
+	}else{
+		$total_page = floor($total_record / $scale) + 1;  --> 안떨어지면 나눈 몫+1
+	}
+	if(! $_GET[page])		--> 게시글을 클릭하는 부분이 생길 것이고 page parameter가 없으면 page 번호가 1번, 게시판에 바로 들어간다면
+	{
+		$page = 1;
+	}else {			--> 보고 싶은 페이지를 클릭하면 그 페이지 정보가 나타남, page_control에  반복문으로 구현되어 있음
+		$page = $_GET[page];
+	}
+	
+	$start = ($page - 1) * $scale;		--> 몇 번 게시글 부터 가지고 올지를 결정할 변수, 시작은 0번 부터, 2페이지를 클릭하면 $page에 2가 들어가고 scale이 5면 5==6번째 게시글부터 보여줌
+	$number = $total_record - $start;	--> 게시글 번호가 역순으로 매겨지도록 설정
+	
+	include "sub_img.php";	--> 이미지
+	include "sub_menu.php";	--> 메뉴
+?>
+<article>		--> 게시글이 보여지는 부분
+	<h1> Notice </h1>
+		<table id = "notice">   --------------> 여기부터 테이블
+			<tr>
+				<th class="tno">No.</th>
+				<th class="ttitle">Title</th>
+				<th class="twriter">Writer</th>
+				<th class="tdata">Date</th>
+				<th class="tread">Read</th>
+		</tr>
+<?php 
+	for($i=$start; $i < $start+$scale && $i < $total_record ;$i++)		--> 반복문, 페이지 표시 갯수를 초과하지 않고, 전체 게시글의 수를 넘어서지 않는 조건 내에서 반복
+	{
+		mysql_data_seek($result, $i);		--> result의 0번 레코드에서 $i 만큼 내려가라
+		$row = mysql_fetch_array($result);	--> $i 만큼 내려갔을 때 위치한 레코드를 저장
+		
+		$item_num = $row[num];		--> 게시글 정보 저장
+		$item_nick = $row[nick];
+		$item_hit = $row[hit];
+		$item_date = $row[regist_day];
+		$item_date = substr($item_date, 0, 10);		--> 문자열에서 0~10번째 까지만 가져옴, 시간정보를 제외한 날짜 정보
+		$item_subject = str_replace(" ", "&nbsp;", $row[subject]); --> $row[subject]에서 " "을 &nbsp로 수정, 웹페이지에서는 " "는 표시가 안되기 때문에 html 인코딩을 통해서 다시 저장
+?>			<tr>
+				<td><?= $number ?></td>	-> 게시글 번호, 
+				<td class="left">
+				<a href="view.php?num=<?=$item_num?>&page=<?=$page?>"> --> 특정 게시글 제목을 클릭했을 때 게시글 내용을 보여주기 위해서 
+				<?= $item_subject ?></a></td>
+				<td><?= $item_nick ?></td>
+				<td><?= $item_date ?></td>
+				<td><?= $item_hit ?></td>
+			</tr>
+
+<?php 
+	$number--;	--> number를 1 줄이고 반복문 다시 
+	}	---> 반복문 종료
+?>
+
+		</table>                        --------------> 여기까지 테이블
+
+		
+		<form name="board_from" method="post" action="list.php?mode=search">	--> 검색기능, method는 post, action은 자기 자신인데 mode라고 하는 parameter에 serch라는 값을 입력
+			<div id="table_search">
+				<select name="find">	--> option 중에 하나가 find에 들어감
+					<option value='subject'>제목</option>
+					<option value='content'>본문</option>
+					<option value='nick'>닉네임</option>
+				</select>
+				<input type="text" name="search" class="input_box">	--> 검색하는 문자열이 search에 들어감
+				<input type="submit" value="submit" class="btn">
+			</div>
+		</form>
+		
+		<div class="clear"></div>
+		
+<div id="page_control">	--> 게시글이 여러 개일 때 페이지 번호가 있어야 함, 앞뒤에 prev, next도 있음
+		<a href="#">Prev</a>	--> 이따가 수정할 것 
+<?php 
+			for ($i=1; $i <= $total_page; $i++)
+			{
+				if ($page == $i)	--> 현재 페이지와 같은 숫자는 링크 없이 보임
+				{
+					echo "<b> $i </b>";
+				}
+				else{ 		--> 현재 페이지가 아니면 링크를 걸어줌
+					echo "<a href='list.php?page=$i'> $i </a>";
+				}
+			}
+?>
+		<a href="#">Next</a> 
+		
+		<div id="button">
+<?php 
+	if($_SESSION['userid'])	--> 로그온이 되어 있다면 게시글을 작성할 수 있도록 해주겠다는 것
+	{
+?>
+	<a href="write_form.php"><img src="/basic/images/write.png"></a>&nbsp;	--> 이미지를 넣어주고 이것을 클릭하면 write_form.php, 게시글 작성 페이지로 넘어갈 수 있도록 설정 
+
+<?php 
+	}
+?>
+</div>
+</div>
+</article>
+	
+<?php
+mysql_close();
+include "../footer.php"
+?>
+
+
+여기까지 하고 쉬었다가 게시글 작성과 관련된 코드를 확인
+우선 prev, next 만 추가해볼것
+
+
