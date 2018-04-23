@@ -1,0 +1,476 @@
+list.php
+
+<?php	
+	include "../header.php";
+	include "../login/dbconn.php";
+	
+	$scale = 5;
+	$search = $_POST['search'];
+	$find = $_POST['find'];
+	$mode = $_GET[mode];
+	$page = $_GET[page];
+	
+	if($mode == "search")
+	{
+		if(!$search)
+		{
+			echo("
+						<script>
+						window.alert('검색 단어를 입력하세요!');
+						history.go(-1);
+					</script>
+					");
+			exit;
+		}
+		$sql = "select * from greet where $find like '%$search%' order by num desc";
+	}
+	else {
+		$sql = "select * from greet order by num desc";
+	}
+	
+	$result = mysql_query($sql, $connect);
+	$total_record = mysql_num_rows($result);
+	mysql_close();
+	
+	if($total_record % $scale == 0)
+	{
+		$total_page = floor($total_record / $scale);
+	}else{
+		$total_page = floor($total_record / $scale) + 1;
+	}
+	
+	if(! $_GET[page])
+	{
+		$page = 1;
+	}else {
+		$page = $_GET[page];
+	}
+	
+	$start = ($page - 1) * $scale;
+	$number = $total_record - $start;
+	
+	include "sub_img.php";
+	include "sub_menu.php";
+?>
+<article>
+	<h1> Notice </h1>
+		<table id = "notice">
+			<tr>
+				<th class="tno">No.</th>
+				<th class="ttitle">Title</th>
+				<th class="twriter">Writer</th>
+				<th class="tdata">Date</th>
+				<th class="tread">Read</th>
+		</tr>
+<?php 
+	for($i=$start; $i < $start+$scale && $i < $total_record ;$i++)
+	{
+		mysql_data_seek($result, $i);
+		$row = mysql_fetch_array($result);
+		
+		$item_num = $row[num];
+		$item_nick = $row[nick];
+		$item_hit = $row[hit];
+		$item_date = $row[regist_day];
+		$item_date = substr($item_date, 0, 10);
+		$item_subject = str_replace(" ", "&nbsp;", $row[subject]);
+?>
+			<tr>
+				<td><?= $number ?></td>
+				<td class="left">
+				<a href="view.php?num=<?=$item_num?>&page=<?=$page?>">
+				<?= $item_subject ?></a></td>
+				<td><?= $item_nick ?></td>
+				<td><?= $item_date ?></td>
+				<td><?= $item_hit ?></td>
+			</tr>
+
+<?php 
+	$number--;
+	}
+?>
+
+		</table>
+
+		
+		<form name="board_from" method="post" action="list.php?mode=search">
+			<div id="table_search">
+				<select name="find">
+					<option value='subject'>제목</option>
+					<option value='content'>본문</option>
+					<option value='nick'>닉네임</option>
+				</select>
+				<input type="text" name="search" class="input_box">
+				<input type="submit" value="submit" class="btn">
+			</div>
+		</form>
+		
+		<div class="clear"></div>
+		
+<div id="page_control">
+		<a href="./list.php?page=<?php if($page==1){echo $page;} else{echo $page-1;}?>">Prev</a> 
+<?php 
+			for ($i=1; $i <= $total_page; $i++)
+			{
+				if ($page == $i)
+				{
+					echo "<b> $i </b>";
+				}
+				else{ 
+					echo "<a href='list.php?page=$i'> $i </a>";
+				}
+			}
+?>
+		<a href="./list.php?page=<?php if($page==$total_page){echo $page;} else{echo $page+1;}?>">Next</a> 
+		
+		<div id="button">
+<?php 
+	if($_SESSION['userid'])	// 게시글 작성은 로그인 했을 때만 보임
+	{
+?>
+	<a href="write_form.php"><img src="/basic/images/write.png"></a>&nbsp;
+
+<?php 
+	}
+?>
+</div>
+</div>
+</article>
+	
+<?php
+mysql_close();
+include "../footer.php"
+?>
+
+
+write_from.php
+<?php
+include "../header.php";
+include "sub_img.php";
+include "sub_menu.php";
+?>
+<?php 
+// 이 부분은 처음 글을 작성할 때는 사용 X, 게시글을 수정할 때 사용
+$mode = $_GET[mode];		// mode, 새로 글을 쓰는 지, 수정하는 것인지 확인
+$item_num = $_GET[num];		// num, 수정 일 때는 현재 글의 번호를 알아야 함
+$page = $_GET[page];		// page, 현재 보고 있었던 페이지
+$usernick =$_SESSION['usernick'];	// 닉네임 입력 받음, 게시글 작성시 자동으로 들어가도록
+
+if($mode == "modify")		// 수정인 경우
+{
+	include "../login/dbconn.php";
+	$sql = "select * from greet where num=$item_num";	// 데이터베이스에서 현재 글번호에 해당하는 게시글 가져오기
+	$result = mysql_query($sql, $connect);
+	$row = mysql_fetch_array($result);
+	$item_subject = $row[subject];	// 제목
+	$item_content = $row[content];	// 컨텐츠가 보이도록 할 것
+	mysql_close();
+}
+?>
+
+
+<article>
+	<h1>글 작성하기</h1>
+	<div id="col2">
+		
+<?php 
+	if($mode == "modify")	// 수정인 경우
+	{
+?>
+	
+	<form name="board_form" method="post" action="insert.php?mode=modify&num=<?=$item_num?>&page=<?=$page?>" enctype="multipart/form-data">	// 폼을 submit하면 insert.php에 mode를 modify로 해서 num은 item_num, page는 item_page로 해서 넘김
+	<?php 
+	}	
+	else
+	{			// 그러지 않으면
+?>
+		<form name="board_form" method="post" action="insert.php" enctype="multipart/form-data"> // 그냥 insert.php에 넘김
+<?php 
+	}
+?>
+			<div id="write_form">
+				<div class="write_line"></div>
+					<div id="write_row1">
+						<div class="col1"> 닉네임 </div>
+						<div class="col2"> <?=$usernick?></div> // 닉네임
+					</div>
+				<div class="write_line"></div>
+				
+					<div id="write_row2">
+						<div class="col1"> 제목 </div>
+						<div class="col2">
+							<input type="text" name="subject" // 제목입력 텍스트 박스
+value="<?=$item_subject?>">
+						</div>
+					</div>
+				<div class="write_line"></div>
+				
+					<div id="write_row3">
+						<div class="col1"> 내용 </div>
+						<div class="col2">
+							<textarea name="content"><?=$item_content?></textarea>	// 내용 입력 텍스트 area
+						</div>
+					</div>
+						<div class="write_line"></div>
+						
+					<div id="write_row4">
+						<div class="col1"> 파일 </div>
+						<div class="col2">
+							<input type="file" name="upfile"> // 업로드, 자세한 설정은 css를 봐야 할듯
+						</div>
+					</div>
+					<div class="clear"></div>
+			
+			</div>
+			<div class="write_line"></div>
+			<div id="write_button">
+				<input type="image" src="/basic/images/ok.png">&nbsp;	// 완료버튼 이미지, submit은 어디에?
+				<a href="list.php?page=<?=$page?>"><img src="/basic/images/list.png">// 목록버튼 이미지	</a>
+			</div>
+			
+			
+		</form>
+	</div><!-- col2 end -->
+</article>
+
+<?php 
+	include "../footer.php";
+?>
+
+insert.php
+
+<?php 
+session_start();
+
+
+if( ! $_POST['subject'])	// 제목이 없으면
+{
+	echo ("
+				<script>
+				alert('제목을 입력하세요')
+				history.go(-1)
+				</script>
+				");
+	exit;
+}
+if( ! $_POST['content'])	// 내용이 없으면
+{
+	echo ("
+				<script>
+				alert('내용을 입력하세요')
+				history.go(-1)
+				</script>
+				");
+	exit;
+}
+
+if(! $_SESSION['userid']) {	// 로그인 되어 있지 않으면, 세션에 userid가 없으면
+	echo("
+		<script>
+	     window.alert('로그인 후 이용해 주세요.')
+	     history.go(-1)
+	   </script>
+		");
+	exit;
+}
+	// 정상적으로 글 작성이 되었다면
+	$regist_day = date("Y-m-d (H:i)");	// 등록 날짜
+	include "../login/dbconn.php";
+	
+	$mode = $_GET['mode'];		// 모드 확인
+	$page = $_GET[page];		// 페이지 확인
+	$subject = $_POST['subject'];	// 제목 확인
+	$content = $_POST['content'];	// 내용 확인	
+	$item_num = $_GET[num];		// 글 번호 확인
+
+	$userid = $_SESSION['userid'];
+	$username = $_SESSION['username'];
+	$usernick = $_SESSION['usernick'];
+	
+	if(is_uploaded_file($_FILES['upfile']['tmp_name']))	// is_uploaded_file 파일 업로드 여부 확인 함수?, 첨부한 파일은 임시 디렉토리에 올라감, 그 때 사용한 파일이름을 가지고 올 때 $_FILES['upfile']['tmp_name'] 사용, upfile은 파일을 첨부할 때 사용한 name, 그게 참이면 임시 디렉토리 파일이 있다는 것
+	{
+		$destination = "../data/" . $_FILES['upfile']['name']; // 저장 위치는 /basic/data/,  $_FILES['upfile']['name']는 실제 파일이름이라고 보면 됨
+		move_uploaded_file($_FILES['upfile']['tmp_name'], $destination); // move_uploaded_file 파일을 저장? 임시로 저장된 파일을 지정된 경로($destination)로 이동
+		$file_name = $_FILES['upfile']['name'];	// 실제 업로드된 이름 이름 저장
+	}
+
+	if($mode == "modify")	// 수정인 경우
+	{
+		$sql = "update greet set subject='$subject', content='$content', file_name='$file_name' where num=$item_num";	// 기존의 레코드 갱신
+
+	}
+	else {			// 새로 등록한 경우
+		$sql = "insert into greet (id, nick, subject, content, regist_day, hit, file_name)";
+		$sql .= "values ('$userid', '$usernick', '$subject', '$content', '$regist_day','0','$file_name')";
+	}	// 레코드 생성 후 저장, hit 카운트는 초기값 0
+	
+	mysql_query($sql, $connect);
+	mysql_close();
+
+	echo ("		// 작업이 끝나면 다시 원래 게시판 페이지로 
+			<script>
+			location.href='list.php?page=$page';
+			</script>
+			");
+?>
+
+
+view.php
+
+<?php 
+include "../header.php";
+include "sub_img.php";
+include "sub_menu.php";
+include "../login/dbconn.php";
+	$page = $_GET[page];	// 현재 페이지번호 저장
+	
+	$sql = "select * from greet where num='".$_GET[num]."'";	 // 글 번호에 해당하는 게시글 가져오기
+	$result = mysql_query($sql, $connect);
+
+	$row = mysql_fetch_array($result);
+	// 게시글에 표시할 내용 저장
+	$item_id = $row[id];
+	$item_nick = 	$row[nick];
+	$item_hit = 	$row[hit];
+	$item_date = $row[regist_day];
+	$item_date = substr($item_date, 0, 10);
+	$item_content = 	$row[content];	// 엔터 처리는 이후에 확인해볼 것
+	$item_subject = 	str_replace(" ", "&nbsp;", $row[subject]);	// 제목의 빈칸은 html 인코딩
+	$item_num = $row[num];
+	$item_filename = $row[file_name];
+	$new_hit = $item_hit + 1;	// 조회수 1 증가
+	$sql = "update greet set hit=$new_hit where num=$item_num";	// 1증가 후 저장
+	mysql_query($sql, $connect);
+	mysql_close();
+?>
+<script>
+	function del(href)	// del 함수 정의
+	{
+		if( confirm("정말 삭제하시겠습니까?") )
+			document.location.href = href;	// 링크를 따라서 이동하라는 의미
+	}
+</script>
+
+<article>
+	<h1>Notice</h1>
+		<div id = "col2">
+			
+			<div id ="view_title">
+				<div id="view_title1">&nbsp;제목 : <?= $item_subject ?></div>	// 제목 표시
+				<div id="view_title2"><?= $item_nick ?> | 조회 : <?= $new_hit?>	|	<?= $item_date?></div>	// 닉네임, 조회수 표시 
+			</div>
+			<div id="view_content">
+			<?=nl2br($item_content)?>	// nl2br? 	엔터키로 입력되는 기호(nl)은 br태그로 바꿔라
+			</div>
+		<div id="view_file">
+<?php
+	if ($item_filename)	// 첨부 파일이 있는 경우
+{
+	?>
+	 <a href="download.php?file=<?=$item_filename?>">첨부파일 : <?= $item_filename?></a> // download.php로 파일이름을 넘기는 링크
+<?php
+}
+?>
+
+		</div>
+	<div class="clear"></div>
+		<div id="view_button">
+			<a href="list.php?page=<?=$page?>"><img src="/basic/images/list.png"></a>&nbsp; // 목록 버튼
+		
+<?php 
+	if($_SESSION['userid'] && ($_SESSION['userid'] == $item_id))	// 로그인 되어 있고, 로그인한 id가 작성자 id와 같다면 	
+	{
+?>
+		<a href="write_form.php?mode=modify&num=<?=$item_num?>&page=<?=$page?>"><img src="/basic/images/modify.png"></a>&nbsp;	// 수정버튼 보여줌
+		<a href="javascript:del('delete.php?num=<?= $item_num?>')"><img src="/basic/images/delete.png"></a>&nbsp;	// 삭제 버튼 보여줌, 클릭시 del 함수에게 넘겨줌, parameter는 url 경로
+<?php 
+	}
+	if($_SESSION['userid'])	// 로그인 되어 있으면
+	{
+?>
+	<a href="write_form.php"><img src="/basic/images/write.png"></a>&nbsp;	// 글쓰기 버튼 보여줌
+
+<?php 
+	}
+	?>
+			</div><!-- button end -->
+		<div class="clear"></div>
+	</div><!-- col2 end -->
+</article>
+
+<?php include "../footer.php";?>
+
+
+download.php
+
+<?php
+$file = $_GET['file'];		// 파일 이름 받음
+$length = filesize("../data/".$file);	// 파일 길이 받음
+// 헤더 설정, Header 함수는 응답 메시지에 헤더를 붙여주기 위해서 사용하는 함수
+웹서버나 웹브라우저 둘다 헤더를 추가할 수 있는데
+웹브라우저는 요청하는 메시지의 추가 정보를 전달할 수 있음
+웹서버가 웹브라우저에게 전달해야할 추가 정보도 넣을 수 있음
+Header("Content-Type: application/octet-stream");
+Header("Content-Disposition: attachment; filename=".$file);
+Header("Content-Transfer-Encoding: binary");
+Header("Content-Length: ".$length);	// 파일의 길이
+Header("Cache-Control: cache, must-revalidate");
+Header("Pragma: no-cache");
+Header("Expires: 0");
+
+$fp = fopen("../data/".$file, "rb");	// 파일을 읽어서 포인터 저장, 파일을 연다, read only binary mode
+while(!feof($fp))			// feof 파일의 끝인지 확인
+{
+	echo fread($fp, $length);	// 내용이 없을 때까지 읽어들여줌
+	flush();			// 읽어들인 내용을 브라우저로 보냄
+}
+fclose($fp);			// 파일 포인터 닫기
+?>
+
+delete.php
+<?php
+	//session_start(); 	없어도 되는 정보
+	$num = $_GET[num];	// 글번호 가져오기
+	include "../login/dbconn.php";
+	
+	$sql = "select * from greet where num = $num";	//글 번호에 해당하는 게시글 가져오기
+	$result = mysql_query($sql, $connect);
+	$row = mysql_fetch_array($result);
+	
+	if($row['file_name'])			// 첨부 파일이 있으면, file_name이 있으면
+	{
+		unlink("../data/".$row['file_name']);	//  unlink를 통해서 해당 게시글의 첨부파일을 먼저 삭제
+	}
+	
+	$sql = "delete from greet where num = $num";	// 해당 글 제거
+	mysql_query($sql, $connect);
+	
+	mysql_close();
+	
+	echo ("					// 삭제 완료 메시지 출력
+				<script>
+					alert('삭제 완료');
+					location.href='list.php';
+				</script>
+			");
+	?>
+
+
+03. 웹 서버 제작
+1. 서버와 웹 서버, 언어에 제약 없음.
+ - 윈도우 또는 리눅스 서버
+ - IIS 또는 Apache
+ - ASP, PHP, JSP  -> JSP는 어렵기도하고 보안성이 높아서 이후에 시도해볼 여러 공격이 안될 가능성이 있음
+ - MS-SQL, MY-SQL, Oracle
+
+2. 필수 구현 기능
+ - 컨설팅 대상 업체와 관련된 컨텐츠 올릴 것.
+ - 로그온, 로그오프, 회원관리 등
+ - 게시판 : 게시글 검색, 파일 업로드
+
+3. 기간
+ - 5월 11일 까지
+
+완성이 되어야 함, 시연할 
+평가는 아니지만 나중에 프로젝트할 때 사용할 것
+5월 7일은 쉬는 날

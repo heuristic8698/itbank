@@ -287,4 +287,20 @@ include "../footer.php"
 여기까지 하고 쉬었다가 게시글 작성과 관련된 코드를 확인
 우선 prev, next 만 추가해볼것
 
-
+<div id="page_control">
+		<a href="./list.php?page=<?php if($page==1){echo $page;} else{echo $page-1;}?>">Prev</a> 
+<?php 
+			for ($i=1; $i <= $total_page; $i++)
+			{
+				if ($page == $i)
+				{
+					echo "<b> $i </b>";
+				}
+				else{ 
+					echo "<a href='list.php?page=$i'> $i </a>";
+				}
+			}
+?>
+		<a href="./list.php?page=<?php if($page==$total_page){echo $page;} else{echo $page+1;}?>">Next</a> 
+		
+		<div id="button">
