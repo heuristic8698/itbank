@@ -421,3 +421,7 @@ Cookie:* 를
 Cookie: ASPSESSIONIDASDCDTAQ=ICBNEFODBONNMBBHLKGDAFLG 로 변경
 backtrack에서 파이어폭스로 webhack 사이트에 접속해보면 로그인 한적이 없는데 회원 정보 변경 페이지를 볼 수 있음
 만약에 쿠키 변환이 잘 안되는 경우, backtrack이 사용하는 쿠키 전체를 변환 전 문자열로 설정해볼 것
+
+이런 공격에 대한 방어는 암호화 통신이 좋을 것
+XSS 같은 경우 출발지 ip 주소 확인 또는 동시 접속 제어등으로 공격에 대한 방어를 할 수 있음
+내일은 강사님 출장, 다른 강사님이 수업
